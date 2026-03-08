@@ -3,13 +3,13 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "allowJs": true,
-    "checkJs": true,
-    "noEmit": true,
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": ".",
     "strict": true,
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["manifest.js"]
+  "include": ["manifest.ts"],
+  "exclude": ["dist", "node_modules"]
 }
-

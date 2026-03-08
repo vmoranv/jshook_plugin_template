@@ -1,6 +1,6 @@
-﻿# jshook_plugin_template
+# jshook_plugin_template
 
-Template repository for building a `jshook` plugin with the smallest practical MVP.
+TypeScript-first template repository for building a `jshook` plugin.
 
 This template is intentionally narrow:
 
@@ -8,14 +8,15 @@ This template is intentionally narrow:
 - demonstrate built-in tool invocation from a plugin
 - show a safe `Promise.all` read-only parallel pattern
 - keep permissions small and explicit
-- include an agent recipe document for MCP / subagent usage
+- keep TypeScript source in Git and generated JavaScript out of Git
 
 ## Included in the template
 
-- `manifest.js`: plugin entrypoint
+- `manifest.ts`: plugin source entrypoint
 - `meta.yaml`: plugin metadata
 - `.env.example`: local configuration sample
 - `docs/agent-recipes.md`: recipes for parallel reads and subagent-assisted analysis
+- `dist/manifest.js`: generated locally by `pnpm run build` and ignored by Git
 
 ## Built-in examples
 
@@ -25,31 +26,35 @@ The template ships with three example tools:
 - `template_parallel_surface_scan`
 - `template_openapi_probe`
 
-They demonstrate:
-
-- reading config and runtime state
-- calling built-in tools through `ctx.invokeTool()`
-- using `Promise.all` for read-only fan-out
-- probing Swagger / OpenAPI endpoints with `api_probe_batch`
-
 ## Dependency model
 
-This template now uses the published npm package:
+This template uses the published npm package:
 
 ```json
 {
-  "@jshookmcp/extension-sdk": "^0.1.2"
+  "@jshookmcp/extension-sdk": "^0.1.3"
 }
 ```
 
-That means the template can be cloned independently and installed directly with `pnpm install`.
-
-## Install
+## Install and build
 
 ```bash
 pnpm install
+pnpm run build
 pnpm run check
 ```
+
+## Loading behavior
+
+`jshook` discovers both `manifest.ts` and `dist/manifest.js`, but when both exist it prefers the generated JavaScript entry.
+
+That means the recommended workflow is:
+
+1. edit `manifest.ts`
+2. run `pnpm run build`
+3. let `jshook` load `dist/manifest.js`
+
+Do **not** commit `dist/`.
 
 ## Load the plugin into jshook
 
@@ -79,6 +84,7 @@ This template intentionally starts from minimal permissions:
 Keep this repo focused on source and docs.
 Do not commit:
 
+- `dist/`
 - `node_modules/`
 - `.env`
 - runtime artifacts

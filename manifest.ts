@@ -1,12 +1,16 @@
+import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type {
+  DomainManifest,
+  PluginContract,
+  PluginLifecycleContext,
+  ToolArgs,
+  ToolHandlerDeps,
+} from '@jshookmcp/extension-sdk/plugin';
 import { getPluginBooleanConfig, loadPluginEnv } from '@jshookmcp/extension-sdk/plugin';
 
-/** @typedef {import('@jshookmcp/extension-sdk/plugin').PluginContract} PluginContract */
-/** @typedef {import('@jshookmcp/extension-sdk/plugin').PluginLifecycleContext} PluginLifecycleContext */
-/** @typedef {import('@jshookmcp/extension-sdk/plugin').DomainManifest} DomainManifest */
-/** @typedef {import('@jshookmcp/extension-sdk/plugin').ToolArgs} ToolArgs */
-/** @typedef {import('@jshookmcp/extension-sdk/plugin').ToolHandlerDeps} ToolHandlerDeps */
-/** @typedef {import('@modelcontextprotocol/sdk/types.js').Tool} Tool */
-/** @typedef {{ content: Array<{ type: 'text', text: string }> }} TextToolResponse */
+type TextToolResponse = {
+  content: Array<{ type: 'text'; text: string }>;
+};
 
 loadPluginEnv(import.meta.url);
 
@@ -15,36 +19,21 @@ const PLUGIN_ID = 'io.github.example.template-plugin';
 const DOMAIN = 'template-plugin';
 const DEP_KEY = 'templatePluginHandlers';
 
-/** @type {PluginLifecycleContext | null} */
-let lifecycleContext = null;
+let lifecycleContext: PluginLifecycleContext | null = null;
 
-/**
- * @param {unknown} payload
- * @returns {TextToolResponse}
- */
-function toText(payload) {
+function toText(payload: unknown): TextToolResponse {
   return {
     content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }],
   };
 }
 
 class TemplatePluginHandlers {
-  /**
-   * @param {(name: string, args?: Record<string, unknown>) => Promise<unknown>} invokeTool
-   * @param {(path: string, fallback?: unknown) => unknown} getConfig
-   */
-  constructor(invokeTool, getConfig) {
-    /** @type {(name: string, args?: Record<string, unknown>) => Promise<unknown>} */
-    this.invokeTool = invokeTool;
-    /** @type {(path: string, fallback?: unknown) => unknown} */
-    this.getConfig = getConfig;
-  }
+  constructor(
+    private readonly invokeTool: (name: string, args?: Record<string, unknown>) => Promise<unknown>,
+    private readonly getConfig: <T = unknown>(path: string, fallback?: T) => T,
+  ) {}
 
-  /**
-   * @param {ToolArgs} _args
-   * @returns {Promise<TextToolResponse>}
-   */
-  async handleHealth(_args = {}) {
+  async handleHealth(_args: ToolArgs = {}): Promise<TextToolResponse> {
     return toText({
       success: true,
       pluginId: PLUGIN_ID,
@@ -56,13 +45,9 @@ class TemplatePluginHandlers {
     });
   }
 
-  /**
-   * @param {ToolArgs} args
-   * @returns {Promise<TextToolResponse>}
-   */
-  async handleParallelSurfaceScan(args = {}) {
+  async handleParallelSurfaceScan(args: ToolArgs = {}): Promise<TextToolResponse> {
     const includeLinks = args.includeLinks !== false;
-    const jobs = [
+    const jobs: Array<Promise<unknown>> = [
       this.invokeTool('page_get_local_storage', {}),
       this.invokeTool('page_get_cookies', {}),
     ];
@@ -82,11 +67,7 @@ class TemplatePluginHandlers {
     });
   }
 
-  /**
-   * @param {ToolArgs} args
-   * @returns {Promise<unknown>}
-   */
-  async handleOpenapiProbe(args = {}) {
+  async handleOpenapiProbe(args: ToolArgs = {}): Promise<unknown> {
     const baseUrl =
       typeof args.baseUrl === 'string'
         ? args.baseUrl
@@ -102,23 +83,18 @@ class TemplatePluginHandlers {
   }
 }
 
-/**
- * @param {string} methodName
- * @returns {(deps: ToolHandlerDeps) => (args: ToolArgs) => Promise<unknown>}
- */
-function bind(methodName) {
-  return (deps) => async (args) => {
-    const handlers = /** @type {Record<string, unknown>} */ (deps[DEP_KEY]);
-    const method = handlers[methodName];
+function bind(methodName: keyof TemplatePluginHandlers) {
+  return (deps: ToolHandlerDeps) => async (args: ToolArgs) => {
+    const handlers = deps[DEP_KEY] as TemplatePluginHandlers;
+    const method = handlers[methodName] as ((args: ToolArgs) => Promise<unknown>) | undefined;
     if (typeof method !== 'function') {
-      throw new Error(`Missing template plugin handler: ${methodName}`);
+      throw new Error(`Missing template plugin handler: ${String(methodName)}`);
     }
     return await method.call(handlers, args ?? {});
   };
 }
 
-/** @type {Tool[]} */
-const tools = [
+const tools: Tool[] = [
   {
     name: 'template_plugin_health',
     description: 'Return plugin status, load time, and default config values.',
@@ -129,7 +105,8 @@ const tools = [
   },
   {
     name: 'template_parallel_surface_scan',
-    description: 'Run Promise.all against built-in page tools to collect localStorage, cookies, and optional links.',
+    description:
+      'Run Promise.all against built-in page tools to collect localStorage, cookies, and optional links.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -155,8 +132,7 @@ const tools = [
   },
 ];
 
-/** @type {DomainManifest} */
-const domainManifest = {
+const domainManifest: DomainManifest<typeof DEP_KEY, TemplatePluginHandlers, typeof DOMAIN> = {
   kind: 'domain-manifest',
   version: 1,
   domain: DOMAIN,
@@ -179,17 +155,16 @@ const domainManifest = {
   ],
 };
 
-/** @type {PluginContract} */
-const plugin = {
+const plugin: PluginContract = {
   manifest: {
     kind: 'plugin-manifest',
     version: 1,
     id: PLUGIN_ID,
     name: 'JSHook Plugin Template',
     pluginVersion: '0.1.0',
-    entry: 'manifest.js',
+    entry: 'manifest.ts',
     description:
-      'Template plugin showing PluginContract, built-in tool invocation, Promise.all parallel reads, and minimal permissions.',
+      'TypeScript-first template plugin showing PluginContract, built-in tool invocation, Promise.all parallel reads, and minimal permissions.',
     compatibleCore: '>=0.1.0',
     permissions: {
       network: { allowHosts: [] },
@@ -237,4 +212,3 @@ const plugin = {
 };
 
 export default plugin;
-
