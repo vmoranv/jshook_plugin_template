@@ -9,7 +9,7 @@
     "check": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@jshookmcp/extension-sdk": "file:../jshookmcp/packages/extension-sdk",
+    "@jshookmcp/extension-sdk": "^0.1.2",
     "@modelcontextprotocol/sdk": "^1.27.1"
   },
   "devDependencies": {
@@ -20,4 +20,3 @@
     "node": ">=20.0.0"
   }
 }
-
