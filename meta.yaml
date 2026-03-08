@@ -1,0 +1,5 @@
+name: jshook-plugin-template
+description: Minimal standalone template repo for jshook plugins.
+author: your-team
+source_repo: https://github.com/your-org/jshook-plugin-template
+
