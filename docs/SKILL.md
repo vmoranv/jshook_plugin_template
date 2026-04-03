@@ -1,100 +1,90 @@
-# Plugin Development Guide
+# jshook Plugin Template - Agent Skill Documentation
 
-## Overview
+## For Agents Using This Template
 
-This template demonstrates how to build a reusable jshook MCP plugin.
+This template provides a reusable plugin scaffold for jshook MCP.
 
-## Key Features
+## Available Tools (After Loading)
 
-- **TypeScript-first**: Full type safety with modern TypeScript
-- **createExtension()**: Simplified plugin registration API
-- **Built-in tool invocation**: Examples of calling jshook tools from your plugin
-- **Promise.all parallel reads**: Efficient batch operations for read-only tasks
-- **Minimal permissions**: Security-first approach with least-privilege access
+When this plugin is loaded in a jshook session, the following tools become available:
 
-## Quick Start
+### template_plugin_health
+**Purpose**: Check plugin health status  
+**Arguments**: None  
+**Returns**: `{ status: "ok", timestamp: string }`
 
-```bash
-# Install dependencies
-pnpm install
+### template_parallel_surface_scan
+**Purpose**: Demonstrate parallel read pattern  
+**Arguments**: None  
+**Returns**: `{ extensions: array, localStorage: object, cookies: array }`
 
-# Type check
-pnpm run check
+### template_openapi_probe
+**Purpose**: Probe for OpenAPI/Swagger endpoints  
+**Arguments**: `{ url?: string }`  
+**Returns**: `{ endpoints: array, swaggerFound: boolean }`
 
-# Build
-pnpm run build
-
-# Test locally
-pnpm run dev
-```
-
-## Project Structure
-
-```
-.
-├── manifest.ts          # Plugin entry point and extension definition
-├── package.json         # Dependencies and scripts
-├── tsconfig.json        # TypeScript configuration
-├── meta.yaml            # Extension metadata for registry
-└── docs/
-    └── SKILL.md         # This file - development guide
-```
-
-## Best Practices
-
-### 1. Parallelize Reads, Not Writes
-
-Good candidates for parallel execution:
-- `extensions_list`
-- `page_get_local_storage`
-- `page_get_cookies`
-- `network_get_requests`
-
-Avoid parallelizing actions that mutate shared page state.
-
-### 2. Let Main Agent Control Browser Session
-
-Your plugin should not take control of the browser away from the main agent. Use sidecar analysis instead.
-
-### 3. Use Subagents for Analysis
-
-Recommended split:
-- **Main agent**: Browser control, navigation, data collection
-- **Subagent**: Endpoint classification, auth signal analysis, report drafting
-
-## Registration
-
-To register your plugin in the jshook MCP extension registry:
-
-1. Ensure your repository has:
-   - `meta.yaml` with name, description, author, tags
-   - Public accessibility
-   - Working `pnpm run check` and `pnpm run build`
-
-2. Create an issue at [vmoranv/jshookmcpextension](https://github.com/vmoranv/jshookmcpextension/issues/new?template=register-extension.yml)
-
-3. The sync workflow will automatically add your plugin to the registry on issue close
-
-## Example Usage
+## SDK Functions Used
 
 ```typescript
-import { createExtension } from '@jshook/sdk';
+import { createExtension } from '@jshookmcp/extension-sdk';
 
 export default createExtension({
-  name: 'my-plugin',
+  id: 'PLUGIN_ID',
+  slug: 'PLUGIN_SLUG',
+  name: 'Plugin Name',
   version: '1.0.0',
   
   async setup(ctx) {
-    // Register your tools here
-    ctx.registerTool('myTool', async (params) => {
-      // Your implementation
+    ctx.registerTool('toolName', async (args) => {
+      // Tool implementation
     });
   },
 });
 ```
 
-## Resources
+## Configuration
 
-- [jshook Documentation](https://github.com/vmoranv/jshookmcp)
-- [MCP Extension Registry](https://github.com/vmoranv/jshookmcpextension)
-- [Example Plugins](https://github.com/vmoranv?tab=repositories&q=jshook_plugin_)
+```yaml
+plugins.template.*
+```
+
+## Permissions Required
+
+```typescript
+{
+  toolExecution: {
+    allowTools: [
+      "page_navigate",
+      "page_get_local_storage",
+      "network_get_requests"
+    ]
+  }
+}
+```
+
+## Parallel Read Pattern
+
+Safe to parallelize (Promise.all):
+- `page_get_local_storage`
+- `page_get_cookies`  
+- `network_get_requests`
+- `extensions_list`
+
+Do NOT parallelize:
+- Actions that mutate page state
+- Multiple navigation commands
+
+## Build & Verify
+
+```bash
+pnpm install
+pnpm run build   # Outputs dist/manifest.js
+pnpm run check   # TypeScript type check
+```
+
+## Load Into jshook
+
+1. Set env: `MCP_PLUGIN_ROOTS=/path/to/template`
+2. In jshook: `extensions_reload`
+3. Verify: `extensions_list` shows the plugin
+4. Find tools: `search_tools query="template"`
