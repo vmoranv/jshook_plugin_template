@@ -1,34 +1,147 @@
-# jshook_plugin_template
+# jshook Plugin Template
 
-TypeScript-first template repository for building a `jshook` plugin.
+TypeScript-first template for building reusable jshook MCP plugins.
 
-This template is intentionally narrow:
+## What This Template Provides
 
-- show a minimal `PluginContract`
-- demonstrate built-in tool invocation from a plugin
-- show a safe `Promise.all` read-only parallel pattern
-- keep permissions small and explicit
-- keep TypeScript source in Git and generated JavaScript out of Git
+- **Minimal PluginContract**: Clean, focused plugin structure
+- **Built-in Tool Invocation**: Examples of calling jshook tools from your plugin
+- **Parallel Read Pattern**: Safe `Promise.all` pattern for read-only operations
+- **Minimal Permissions**: Security-first with least-privilege defaults
+- **Complete Development Chain**: From scaffolding to registry publication
 
-## Included in the template
+## Quick Start
 
-- `manifest.ts`: plugin source entrypoint
-- `meta.yaml`: plugin metadata
-- `.env.example`: local configuration sample
-- `docs/agent-recipes.md`: recipes for parallel reads and subagent-assisted analysis
-- `dist/manifest.js`: generated locally by `pnpm run build` and ignored by Git
+### 1. Scaffold Your Plugin
 
-## Built-in examples
+```bash
+# Clone this template
+git clone https://github.com/vmoranv/jshook_plugin_template.git my-plugin
+cd my-plugin
 
-The template ships with three example tools:
+# Install dependencies
+pnpm install
 
-- `template_plugin_health`
-- `template_parallel_surface_scan`
-- `template_openapi_probe`
+# Type check
+pnpm run check
 
-## Dependency model
+# Build
+pnpm run build
+```
 
-This template uses the published npm package:
+### 2. Customize Your Plugin
+
+1. **Update identity** in `manifest.ts`:
+   - Replace `PLUGIN_ID`, `PLUGIN_SLUG`, `PLUGIN_NAME`
+   - Update description and author
+
+2. **Implement your tools**:
+   - Remove sample tools (`template_plugin_health`, etc.)
+   - Add your own tool implementations
+
+3. **Update permissions** in `manifest.ts`:
+   - Keep only the built-in tools you actually need in `allowTools`
+   - Add specific host allowlists in `network.allowHosts`
+   - Configure filesystem roots if needed
+
+4. **Add configuration validation** in `onValidate()`
+
+### 3. Add Documentation
+
+Create `docs/SKILL.md` with:
+- Usage examples
+- Configuration options
+- SDK feature documentation
+- Debugging tips
+
+### 4. Create meta.yaml
+
+```yaml
+name: my-plugin
+description: A brief description of what your plugin does
+author: your-github-username
+tags:
+  - category1
+  - category2
+```
+
+### 5. Test Locally
+
+```bash
+# Set plugin root
+export MCP_PLUGIN_ROOTS=$(pwd)
+
+# In jshook session:
+# 1. extensions_reload
+# 2. extensions_list
+# 3. search_tools
+```
+
+### 6. Debug Your Plugin
+
+Useful debugging commands in jshook:
+
+```
+# Check loaded extensions
+extensions_list
+
+# Find your tools
+search_tools query="my-plugin"
+
+# Check extension health
+extension_healthcheck
+
+# View extension logs (if available)
+```
+
+### 7. Publish to Registry
+
+1. **Push to GitHub**: Make your repository public
+
+2. **Ensure requirements**:
+   - [ ] `meta.yaml` in root directory
+   - [ ] `pnpm run check` passes
+   - [ ] `pnpm run build` succeeds
+   - [ ] `docs/SKILL.md` with usage docs (recommended)
+
+3. **Create registration issue** at [vmoranv/jshookmcpextension](https://github.com/vmoranv/jshookmcpextension/issues/new?template=register-extension.yml):
+   ```
+   Kind: plugin
+   Repository URL: https://github.com/your-username/my-plugin
+   ```
+
+4. **Sync happens automatically**:
+   - On issue close
+   - Daily scheduled workflow
+   - Or manual workflow trigger
+
+## Project Structure
+
+```
+.
+├── manifest.ts          # Plugin entry point and contract definition
+├── package.json         # Dependencies and scripts
+├── tsconfig.json        # TypeScript configuration
+├── meta.yaml            # Extension metadata for registry
+├── .env.example         # Local configuration sample
+├── .gitignore           # Git ignore rules
+└── docs/
+    └── SKILL.md         # Usage documentation and SDK reference
+```
+
+## Built-in Example Tools
+
+The template includes three example tools to demonstrate patterns:
+
+- `template_plugin_health`: Basic health check tool
+- `template_parallel_surface_scan`: Parallel read pattern example
+- `template_openapi_probe`: API probing example
+
+**Remove these** when implementing your own plugin.
+
+## SDK Features
+
+This template uses the official jshook extension SDK:
 
 ```json
 {
@@ -36,66 +149,48 @@ This template uses the published npm package:
 }
 ```
 
-## Install and build
+Key SDK features:
+- `createExtension()`: Simplified plugin registration
+- Tool registration API
+- Configuration validation hooks
+- Lifecycle management
 
-```bash
-pnpm install
-pnpm run build
-pnpm run check
-```
+For full SDK documentation, see the [jshookmcp documentation](https://github.com/vmoranv/jshookmcp).
 
-## Loading behavior
+## Git Hygiene
 
-`jshook` discovers both `manifest.ts` and `dist/manifest.js`, but when both exist it prefers the generated JavaScript entry.
+This repo focuses on source and docs. Do NOT commit:
 
-That means the recommended workflow is:
+- `dist/` - Build output
+- `node_modules/` - Dependencies
+- `.env` - Environment files
+- Runtime artifacts
+- Screenshots
+- Local sessions
 
-1. edit `manifest.ts`
-2. run `pnpm run build`
-3. let `jshook` load `dist/manifest.js`
+## Load Behavior
 
-Do **not** commit `dist/`.
+jshook discovers both `manifest.ts` and `dist/manifest.js`, but prefers the generated JavaScript when both exist.
 
-## Load the plugin into jshook
+Recommended workflow:
+1. Edit `manifest.ts`
+2. Run `pnpm run build`
+3. jshook loads `dist/manifest.js`
 
-Set:
+## Permission Model
 
-```bash
-MCP_PLUGIN_ROOTS=<path-to-cloned-jshook_plugin_template>
-```
+This template starts with minimal permissions:
 
-Then run inside `jshook`:
+- `network.allowHosts`: empty (add your required hosts)
+- `process.allowCommands`: empty (add if needed)
+- `filesystem.readRoots/writeRoots`: empty (add if needed)
+- `toolExecution.allowTools`: only built-in tools used by samples
 
-1. `extensions_reload`
-2. `extensions_list`
-3. `search_tools`
+Always request the minimum permissions your plugin needs.
 
-## Permission model
+## Resources
 
-This template intentionally starts from minimal permissions:
-
-- `network.allowHosts`: empty
-- `process.allowCommands`: empty
-- `filesystem.readRoots/writeRoots`: empty
-- `toolExecution.allowTools`: only the built-in tools actually used by the sample plugin
-
-## Git hygiene
-
-Keep this repo focused on source and docs.
-Do not commit:
-
-- `dist/`
-- `node_modules/`
-- `.env`
-- runtime artifacts
-- screenshots
-- local sessions
-- host-specific temp output
-
-## What to change first
-
-1. replace `PLUGIN_ID`, `PLUGIN_SLUG`, and `DOMAIN`
-2. remove the sample tools
-3. keep only the built-in tools you actually need in `allowTools`
-4. add your own config validation in `onValidate()`
-5. reload extensions and verify visibility in runtime
+- [jshook Main Repo](https://github.com/vmoranv/jshookmcp)
+- [Extension Registry](https://github.com/vmoranv/jshookmcpextension)
+- [Example Plugins](https://github.com/vmoranv?tab=repositories&q=jshook_plugin_)
+- [Example Workflows](https://github.com/vmoranv?tab=repositories&q=jshook_workflow_)
