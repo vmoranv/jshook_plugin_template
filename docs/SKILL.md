@@ -26,20 +26,14 @@ When this plugin is loaded in a jshook session, the following tools become avail
 ## SDK Functions Used
 
 ```typescript
-import { createExtension } from '@jshookmcp/extension-sdk';
+import { createExtension } from '@jshookmcp/extension-sdk/plugin';
 
-export default createExtension({
-  id: 'PLUGIN_ID',
-  slug: 'PLUGIN_SLUG',
-  name: 'Plugin Name',
-  version: '1.0.0',
-  
-  async setup(ctx) {
-    ctx.registerTool('toolName', async (args) => {
-      // Tool implementation
-    });
-  },
-});
+export default createExtension('io.github.example.plugin', '0.1.1')
+  .compatibleCore('>=0.1.0')
+  .allowTool(['page_local_storage', 'page_cookies', 'network_get_requests'])
+  .tool('toolName', 'Tool description', {}, async (_args, ctx) => {
+    return ctx.invokeTool('page_local_storage', { action: 'get' });
+  });
 ```
 
 ## Configuration
@@ -54,8 +48,8 @@ plugins.template.*
 {
   toolExecution: {
     allowTools: [
-      "page_navigate",
-      "page_get_local_storage",
+      "page_local_storage",
+      "page_cookies",
       "network_get_requests"
     ]
   }
@@ -65,8 +59,8 @@ plugins.template.*
 ## Parallel Read Pattern
 
 Safe to parallelize (Promise.all):
-- `page_get_local_storage`
-- `page_get_cookies`  
+- `page_local_storage`
+- `page_cookies`
 - `network_get_requests`
 - `extensions_list`
 

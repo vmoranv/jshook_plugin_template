@@ -53,8 +53,8 @@ async function handleHealth(_args: ToolArgs, ctx: PluginLifecycleContext) {
 async function handleParallelSurfaceScan(args: ToolArgs, ctx: PluginLifecycleContext) {
   const includeLinks = args.includeLinks !== false;
   const jobs: Array<Promise<unknown>> = [
-    ctx.invokeTool('page_get_local_storage', {}),
-    ctx.invokeTool('page_get_cookies', {}),
+    ctx.invokeTool('page_local_storage', { action: 'get' }),
+    ctx.invokeTool('page_cookies', { action: 'get' }),
   ];
 
   if (includeLinks) {
@@ -91,11 +91,11 @@ async function handleOpenapiProbe(args: ToolArgs, ctx: PluginLifecycleContext) {
   }
 }
 
-export default createExtension('io.github.example.template-plugin', '0.1.0')
+export default createExtension('io.github.example.template-plugin', '0.1.1')
   .compatibleCore('>=0.1.0')
   .allowTool([
-    'page_get_local_storage',
-    'page_get_cookies',
+    'page_local_storage',
+    'page_cookies',
     'page_get_all_links',
     'api_probe_batch',
   ])
