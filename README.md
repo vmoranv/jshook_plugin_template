@@ -24,10 +24,10 @@ pnpm check
 
 | File | Purpose |
 |------|---------|
-| `manifest.ts` | Plugin definition built with `createExtension()` |
+| `manifest.ts` | Runtime plugin definition built with `createExtension()` |
 | `package.json` | Current SDK/runtime dependencies |
 | `tsconfig.json` | TypeScript configuration |
-| `meta.yaml` | Registry metadata (name, description, author, tags) |
+| `meta.yaml` | Single source of truth for outward metadata (name, description, author, source_repo) |
 
 ## Example Tools
 
@@ -45,14 +45,14 @@ PowerShell:
 
 ```powershell
 $env:MCP_PLUGIN_ROOTS = (Get-Location).Path
-# In jshook: extensions_reload, then search_tools
+# In jshook: reload_extensions, then call your tool or search_tools
 ```
 
 macOS / Linux:
 
 ```bash
 export MCP_PLUGIN_ROOTS=$(pwd)
-# In jshook: extensions_reload, then search_tools
+# In jshook: reload_extensions, then call your tool or search_tools
 ```
 
 You can also point `MCP_PLUGIN_ROOTS` at a parent directory containing multiple
@@ -62,13 +62,14 @@ plugin folders separated by commas.
 
 1. Push to GitHub (public repo)
 2. Keep `@jshookmcp/extension-sdk` on a published semver range
-2. Ensure `meta.yaml` exists with valid metadata
-3. Create issue at vmoranv/jshookmcpextension (see docs/SKILL.md for agent usage)
+3. Ensure `meta.yaml` exists with valid metadata
+4. Create issue at vmoranv/jshookmcpextension (see docs/SKILL.md for agent usage)
 
 ## Notes
 
-- Keep `manifest.ts` as the authoritative source entrypoint.
-- Build before `extensions_reload` so the core can prefer `dist/manifest.js`.
+- Keep `manifest.ts` as the runtime entrypoint and `meta.yaml` as the metadata source of truth.
+- Do not duplicate `name` / `description` / `author` / `source_repo` in `manifest.ts`.
+- Build before `reload_extensions` so the core can prefer `dist/manifest.js`.
 - Declare only the built-in tools your plugin really needs in `.allowTool(...)`.
 
 ## See Also
